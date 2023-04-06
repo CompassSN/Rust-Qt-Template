@@ -1,10 +1,14 @@
 #include "lib.h"
 
+
 int init(int argc, size_t argv){
     QApplication app(argc, (char**)argv);
-    QWidget widget = QWidget();
+    MainWindow widget = MainWindow();
 
     widget.show();
 
     return app.exec();
 }
+
+
+#include "moc_mainwindow.cpp"

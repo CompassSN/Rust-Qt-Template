@@ -21,6 +21,6 @@ unsafe fn make_c_argv(args: Vec<String>) -> usize{
 mod ffi{
     unsafe extern "C++"{
         include!("qt/cpp/lib.h");
-        unsafe fn init(argc: i32, argv: usize) -> i32;
+        fn init(argc: i32, argv: usize) -> i32;
     }
 }
