@@ -13,17 +13,18 @@ fn main() {
         .collect();
     let qtbuild = qt_build_utils::QtBuild::new(qt_modules).unwrap();
 
-    let mut s = String::new();
+    let mut s = vec![];
     for b in qtbuild.include_paths(){
-        s += &format!(" -l{}", b.to_string_lossy());
+        s.push(format!("-I{}", b.to_string_lossy()));
     }
+    s.extend(["./cpp/mainwindow.h".to_string(), "-o".to_string(), "./target/moc/moc_mainwindow.cpp".to_string()]);
 
     Command::new("/usr/lib/qt6/uic")
         .args(["./ui/mainwindow.ui", "-o", "./target/ui/ui_mainwindow.h"])
         .output()
         .expect("failed to run uic");
     Command::new("/usr/lib/qt6/moc")
-        .args(["./cpp/mainwindow.h", "-o", "./target/moc/moc_mainwindow.cpp"])
+        .args(s)
         .output()
         .expect("failed to run moc");
 
@@ -37,9 +38,9 @@ fn main() {
         .flag("-g")
         .includes(qtbuild.include_paths())
         .includes(["./target/ui/", "./target/moc/"])
-        .file("./target/moc/moc_mainwindow.cpp")
         .file("./cpp/lib.cpp")
+        .file("./target/moc/moc_mainwindow.cpp")
         .compile("cppqt");
-    
+
     qtbuild.cargo_link_libraries();
 }

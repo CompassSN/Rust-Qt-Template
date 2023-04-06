@@ -11,4 +11,4 @@ cxx = "1.0"
 [build-dependencies]
 cc = "1.0"
 cxx-build = "1.0"
-qt-build-utils = "0.4.1"
+qt-build-utils = "0.5"

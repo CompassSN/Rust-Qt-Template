@@ -135,9 +135,9 @@ dependencies = [
 
 [[package]]
 name = "qt-build-utils"
-version = "0.4.1"
+version = "0.5.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "44058bc241aeb84485cfb90e0f6ba28e12db0ed0f5b6eadb1853cf0ea68e21eb"
+checksum = "62085ff4d6faf841dc84e7c98a2d78efe5a7b53e8fc8b232dcbec20613ba3c62"
 dependencies = [
  "thiserror",
  "versions",

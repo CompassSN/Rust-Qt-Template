@@ -9,6 +9,3 @@ int init(int argc, size_t argv){
 
     return app.exec();
 }
-
-
-#include "moc_mainwindow.cpp"
