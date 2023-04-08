@@ -1,4 +1,11 @@
-use std::{vec, process::Command, fs};
+use std::{vec, process::Command, fs, path::{PathBuf, Path}};
+
+const UI_DIR: &str = "./ui";
+const CPP_DIR: &str = "./cpp";
+const UIC_LOC: &str = "/usr/lib/qt6/uic";
+const MOC_LOC: &str = "/usr/lib/qt6/moc";
+const QOBJECT_FILES: [&'static str; 1] = ["./cpp/mainwindow.h"]; 
+
 
 fn main() {
     println!("cargo:rerun-if-changed=./cpp/");
@@ -13,21 +20,42 @@ fn main() {
         .collect();
     let qtbuild = qt_build_utils::QtBuild::new(qt_modules).unwrap();
 
-    let mut s = vec![];
-    for b in qtbuild.include_paths(){
-        s.push(format!("-I{}", b.to_string_lossy()));
+
+    //run uic
+    for f in fs::read_dir(UI_DIR).unwrap(){
+        let f = f.unwrap();
+        Command::new(UIC_LOC)
+            .args([f.path().to_str().unwrap(), "-o", format!("./target/ui/ui_{}.h", f.path().file_stem().unwrap().to_str().unwrap()).as_str()])
+            .output()
+            .expect("failed to run uic");
     }
-    s.extend(["./cpp/mainwindow.h".to_string(), "-o".to_string(), "./target/moc/moc_mainwindow.cpp".to_string()]);
 
-    Command::new("/usr/lib/qt6/uic")
-        .args(["./ui/mainwindow.ui", "-o", "./target/ui/ui_mainwindow.h"])
-        .output()
-        .expect("failed to run uic");
-    Command::new("/usr/lib/qt6/moc")
-        .args(s)
-        .output()
-        .expect("failed to run moc");
+    let mut includes = vec![];
+    for b in qtbuild.include_paths(){
+        includes.push("I".to_string());
+        includes.push(b.to_string_lossy().to_string());
+    }
 
+    //run moc
+    let mut files = vec![];
+    for f in QOBJECT_FILES{
+        let f = Path::new(f);
+        let out_file = f.file_stem().unwrap().to_str().unwrap().to_string();
+        let out_file =  format!("./target/moc/moc_{}.cpp", &out_file);
+        Command::new(MOC_LOC)
+            .args([f.to_str().unwrap(), "-o", out_file.as_str()])
+            .output()
+            .expect("failed to run uic");
+        files.push(out_file);
+        /*let f = std::fs::File::open(&out_file).unwrap();
+        if f.metadata().unwrap().len() == 0{
+            drop(f);
+            fs::remove_file(&out_file).unwrap_or_else(|_|{
+                println!("cargo:warning=不要なファイルの削除に失敗しました。");
+                ()
+            });
+        }*/
+    }
 
     cxx_build::bridge("src/main.rs")
         .cpp(true)
@@ -36,10 +64,9 @@ fn main() {
         .flag("-Wextra")
         .flag("-v")
         .flag("-g")
-        .includes(qtbuild.include_paths())
-        .includes(["./target/ui/", "./target/moc/"])
+        .includes(&includes)
         .file("./cpp/lib.cpp")
-        .file("./target/moc/moc_mainwindow.cpp")
+        .files(files)
         .compile("cppqt");
 
     qtbuild.cargo_link_libraries();
