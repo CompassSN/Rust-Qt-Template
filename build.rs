@@ -2,12 +2,20 @@ use std::{vec, process::Command, fs, path::{PathBuf, Path}};
 
 const UI_DIR: &str = "./ui";
 const CPP_DIR: &str = "./cpp";
-const UIC_LOC: &str = "/usr/lib/qt6/uic";
-const MOC_LOC: &str = "/usr/lib/qt6/moc";
-const QOBJECT_FILES: [&'static str; 1] = ["./cpp/mainwindow.h"]; 
+//const UIC_LOC: &str = "/usr/lib/qt6/uic";
+const UIC_LOC: &str = "uic";
+//const MOC_LOC: &str = "/usr/lib/qt6/moc";
+const MOC_LOC: &str = "moc";
+const QOBJECT_FILES: [&'static str; 1] = ["./cpp/mainwindow.h"];
 
 
 fn main() {
+    //if cfg!(qt6){
+        std::env::set_var("QMAKE", "qmake6");
+    //}else if cfg!(qt5){
+        //std::env::set_var("QMAKE", "qmake");
+    //}
+    std::env::set_var("QMAKE", "qmake");
     println!("cargo:rerun-if-changed=./cpp/");
     println!("cargo:rerun-if-changed=./ui/");
 
@@ -32,9 +40,9 @@ fn main() {
 
     let mut includes = vec![];
     for b in qtbuild.include_paths(){
-        includes.push("I".to_string());
         includes.push(b.to_string_lossy().to_string());
     }
+    includes.push("/usr/include/LayerShellQt".to_string());
 
     //run moc
     let mut files = vec![];
@@ -68,6 +76,10 @@ fn main() {
         .file("./cpp/lib.cpp")
         .files(files)
         .compile("cppqt");
+
+    //println!("cargo:rustc-link-search=/usr/lib/qt/plugins/wayland-shell-integration/");
+    println!("cargo:rustc-link-lib=LayerShellQtInterface");
+    //println!("cargo:rustc-link-lib=layer-shell");
 
     qtbuild.cargo_link_libraries();
 }
