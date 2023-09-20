@@ -1,21 +1,28 @@
-use std::{vec, process::Command, fs, path::{PathBuf, Path}};
+use std::{vec, process::Command, fs, path::Path};
+
+
 
 const UI_DIR: &str = "./ui";
 const CPP_DIR: &str = "./cpp";
-//const UIC_LOC: &str = "/usr/lib/qt6/uic";
-const UIC_LOC: &str = "uic";
-//const MOC_LOC: &str = "/usr/lib/qt6/moc";
-const MOC_LOC: &str = "moc";
+
+
 const QOBJECT_FILES: [&'static str; 1] = ["./cpp/mainwindow.h"];
 
 
 fn main() {
-    //if cfg!(qt6){
+    let qt6 = true;
+
+
+    let (UIC_LOC, MOC_LOC) = if qt6{
         std::env::set_var("QMAKE", "qmake6");
-    //}else if cfg!(qt5){
-        //std::env::set_var("QMAKE", "qmake");
-    //}
-    std::env::set_var("QMAKE", "qmake");
+        std::env::set_var("QT_VERSION_MAJOR", "6");
+        ("/usr/lib/qt6/uic", "/usr/lib/qt6/moc")
+    }else {
+        std::env::set_var("QMAKE", "qmake");
+        std::env::set_var("QT_VERSION_MAJOR", "5");
+        ("uic", "moc")
+    };
+
     println!("cargo:rerun-if-changed=./cpp/");
     println!("cargo:rerun-if-changed=./ui/");
 
@@ -24,7 +31,7 @@ fn main() {
     
     let qt_modules = vec!["Core", "Gui", "Widgets"]
         .iter()
-        .map(|m|String::from(*m))
+        .map(|m|{String::from(*m)})
         .collect();
     let qtbuild = qt_build_utils::QtBuild::new(qt_modules).unwrap();
 
